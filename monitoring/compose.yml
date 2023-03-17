@@ -1,0 +1,42 @@
+
+services:
+  dashboard:
+    container_name: dashboard
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports: 
+      - "3333:3000"
+    networks:
+      - monitoring
+
+  log-agent:
+    container_name: log-agent
+    image: grafana/promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - /var/log:/var/log
+      - ./promtail:/etc/promtail
+    networks:
+      - monitoring
+
+  log-aggregate:
+    container_name: log-aggregate
+    image: grafana/loki
+    user: "501"
+    volumes:
+      - ./loki:/etc/loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    ports: 
+      - "3334:3100"
+    networks:
+      - monitoring
+  
+
+
+networks:
+  monitoring:
+      name: network_monitoring

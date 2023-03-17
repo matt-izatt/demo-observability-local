@@ -1,0 +1,5 @@
+scripts:
+  network: docker compose -p network -f ./network/compose.yml up -d
+  monitoring: docker compose -p monitoring -f ./monitoring/compose.yml up --force-recreate -d
+  observability: docker compose -p observability -f ./observability/compose.yml up --force-recreate -d
+  application: docker compose -p application -f ./application/compose.yml up --build  --force-recreate -d

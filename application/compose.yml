@@ -1,0 +1,54 @@
+services:
+  frontend:
+    container_name: frontend
+    build: ./frontend/
+    ports:
+      - "2021:3001" 
+    networks:
+      - application
+      - monitoring
+    logging: 
+      driver: loki
+      options:
+        loki-url: http://localhost:2001/loki/api/v1/push
+        loki-pipeline-stages: |
+          - labels:
+              test: test
+          - docker: {}
+          - multiline:
+              firstline: ^\x{200B}\[
+              max_lines: 128
+              max_wait_time: 3s
+          - replace:
+              expression: (\n)
+              replace: ""
+
+  backend:
+    container_name: backend
+    build: ./backend/
+    ports:
+      - "3002:3002" 
+    networks:
+      - application
+      - database
+      - monitoring
+  
+  database:
+    container_name: database
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SquigleFish
+    ports: 
+      - "4001:5432"
+    networks:
+      - database
+      - monitoring
+
+networks:
+  application:
+      name: network_application
+  database:
+      name: network_database
+  monitoring:
+      name: network_monitoring

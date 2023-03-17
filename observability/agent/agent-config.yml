@@ -1,0 +1,75 @@
+server:
+  log_level: info
+
+logs:
+  configs:
+    - name: default
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+      
+      positions:
+        filename: /tmp/positions.yaml
+      
+      scrape_configs:
+        - job_name: varlogs
+          static_configs:
+            - targets: [localhost]
+              labels:
+                job: varlogs
+                __path__: /var/log/*log
+
+        - job_name: docker 
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+              refresh_interval: 5s
+          relabel_configs:
+            - source_labels: ['__meta_docker_container_name']
+              regex: '/(.*)'
+              target_label: 'container'
+          pipeline_stages:
+            - docker: {}
+            - multiline:
+                firstline: ^\x{200B}\[
+                max_lines: 128
+                max_wait_time: 3s
+            - replace:
+                expression: (\n)
+                replace: ""
+            - static_labels:
+                job: docker
+
+metrics:
+  wal_directory: /tmp/grafana-agent/wal
+  global:
+    scrape_interval: 15s
+    remote_write:
+    - url: http://mimir:9009/api/v1/push
+
+  configs:
+    - name: agent
+      scrape_configs:
+        - job_name: agent
+          static_configs:
+            - targets: ["127.0.0.1:12345"]
+
+traces:
+  configs:
+    - name: default
+      remote_write:
+        - endpoint: tempo:4317
+          insecure: true
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+            http:
+      batch:
+        timeout: 5s
+        send_batch_size: 100
+
+integrations:
+  node_exporter:
+    enabled: true
+    rootfs_path: /root
+    sysfs_path: /sys
+    procfs_path: /proc

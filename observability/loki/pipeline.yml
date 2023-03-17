@@ -1,0 +1,8 @@
+- docker: {}
+- multiline:
+    firstline: ^\x{200B}\[
+    max_lines: 128
+    max_wait_time: 3s
+- replace:
+    expression: (\n)
+    replace: ""

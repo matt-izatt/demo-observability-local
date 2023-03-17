@@ -1,0 +1,16 @@
+services:
+  stats:
+    image: influxdb:latest
+    container_name: stats
+    networks:
+      - application
+      - database
+      - monitoring
+
+networks:
+  application:
+    driver: bridge
+  database:
+    driver: bridge
+  monitoring:
+    driver: bridge
